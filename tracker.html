@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F7F7F5">
+<title>Petty cash</title>
+<style>
+  :root{
+    --paper:#F7F7F5; --card:#FFFFFF; --ink:#1D1D1F; --sub:#6E6E73; --line:#E5E5EA;
+    --good:#34C759; --goodtext:#1E9E4B; --bad:#FF3B30;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    max-width:520px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 18px) 18px 130px;
+  }
+  button{font:inherit; border:none; background:none; color:inherit}
+
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px}
+  .app{font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--sub)}
+  .topright{display:flex; align-items:center; gap:8px}
+  .chipbtn{
+    font-size:13px; font-weight:600; background:var(--card);
+    border:1px solid var(--line); border-radius:999px; padding:6px 12px;
+  }
+  .stashchip{
+    font-size:13px; font-weight:700; border:1.6px dashed #C7C7CC; border-radius:999px;
+    padding:5px 12px; font-variant-numeric:tabular-nums; color:var(--ink);
+  }
+  .stashchip.neg{color:var(--bad); border-color:#F5B8B4}
+
+  .hero{margin:4px 0 20px}
+  .big{
+    font-family:ui-rounded, -apple-system, sans-serif;
+    font-size:60px; font-weight:800; letter-spacing:-.02em; line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .big small{font-size:29px; font-weight:700; vertical-align:13px; margin-right:2px}
+  .big.neg{color:var(--bad)}
+  .hero .sub{font-size:14px; color:var(--sub); margin-top:6px}
+  .hero .sub b{color:var(--ink); font-weight:600}
+  .track{position:relative; height:10px; border-radius:5px; background:#E9E9EC; margin:15px 0 6px; overflow:visible}
+  .track .money{position:absolute; left:0; top:0; height:10px; border-radius:5px; background:var(--ink); max-width:100%}
+  .track .money.neg{background:var(--bad)}
+  .track .half{position:absolute; top:-4px; bottom:-4px; left:50%; border-left:2px dashed #B9B9BF}
+  .track .today{position:absolute; top:-5px; width:3px; height:20px; border-radius:2px; background:var(--ink)}
+  .trackmeta{display:flex; justify-content:space-between; font-size:11.5px; color:#A0A0A6; font-variant-numeric:tabular-nums}
+
+  .env{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px 16px 13px; margin-bottom:10px}
+  .env .row{display:flex; justify-content:space-between; align-items:baseline}
+  .env .name{font-size:15px; font-weight:600}
+  .env .left{font-family:ui-rounded,-apple-system,sans-serif; font-size:24px; font-weight:800; font-variant-numeric:tabular-nums}
+  .env .left.neg{color:var(--bad)}
+  .env .bar{height:7px; border-radius:4px; background:#EDEDF0; margin-top:10px; position:relative; overflow:hidden}
+  .env .fill{height:7px; position:absolute; left:0; top:0; background:var(--ink); border-radius:4px}
+  .env .fill.neg{background:var(--bad)}
+  .env .abs{
+    height:7px; position:absolute; top:0;
+    background:repeating-linear-gradient(135deg,#C9C9CE 0 4px,#EDEDF0 4px 8px);
+  }
+  .env .meta{font-size:12px; color:var(--sub); display:flex; justify-content:space-between; margin-top:8px}
+  .env .meta .over{color:var(--bad); font-weight:600}
+  .env.hot{border-color:#FFD4D1; background:#FFF7F6}
+
+  .receipt{
+    background:var(--card); border:1px solid var(--line); border-radius:4px 4px 16px 16px;
+    margin-top:20px; padding:14px 16px 8px; position:relative;
+  }
+  .receipt:before{content:""; position:absolute; top:-1px; left:0; right:0; border-top:2px dashed #D6D6DA}
+  .receipt h3{font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:11px; letter-spacing:.18em; color:var(--sub); font-weight:600; margin-bottom:8px}
+  .rline{
+    width:100%; text-align:left; font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:12.5px;
+    display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid #F0F0F2;
+    font-variant-numeric:tabular-nums;
+  }
+  .rline:last-child{border-bottom:0}
+  .rline .d{color:var(--sub); width:42px; flex:none}
+  .rline .c{width:14px; flex:none; font-weight:700; color:var(--sub)}
+  .rline .m{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .rline .a{font-weight:700}
+  .rline .a.in{color:var(--goodtext)}
+  .empty{font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:12px; color:#A6A6AC; padding:10px 0 12px}
+
+  .entrybar{
+    position:fixed; left:0; right:0; bottom:0; max-width:520px; margin:0 auto;
+    padding:12px 14px calc(env(safe-area-inset-bottom) + 14px);
+    background:linear-gradient(180deg, rgba(247,247,245,0) 0%, var(--paper) 26%);
+    display:flex; gap:9px;
+  }
+  .kbtn{
+    flex:1; border-radius:18px; padding:16px 0 14px; color:#fff; background:var(--ink);
+    font-family:ui-rounded,-apple-system,sans-serif; font-size:15px; font-weight:800;
+  }
+  .kbtn span{display:block; font-size:10.5px; font-weight:600; opacity:.8; margin-top:2px;
+    font-family:-apple-system,sans-serif; font-variant-numeric:tabular-nums}
+  .kbtn span.neg{color:#FFB3AD; opacity:1}
+  .kstash{
+    flex:0 0 54px; border-radius:18px; border:1.8px dashed #B9B9BF; color:var(--sub);
+    font-size:22px; font-weight:700; background:var(--paper);
+  }
+
+  /* ---------- sheet ---------- */
+  .scrim{position:fixed; inset:0; background:rgba(0,0,0,.28); display:none; z-index:9}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; max-width:520px; margin:0 auto; z-index:10;
+    background:var(--paper); border-radius:26px 26px 0 0; padding:12px 18px calc(env(safe-area-inset-bottom) + 16px);
+    transform:translateY(105%); transition:transform .22s ease; box-shadow:0 -8px 40px rgba(0,0,0,.14);
+  }
+  .sheet.open{transform:translateY(0)}
+  .scrim.open{display:block}
+  .grab{width:38px; height:5px; border-radius:3px; background:#D8D8DC; margin:0 auto 14px}
+  .chips{display:flex; gap:8px; margin-bottom:14px}
+  .chip{
+    flex:1; text-align:center; padding:10px 0; border-radius:14px; font-size:14px; font-weight:700;
+    background:#EFEFF1; color:var(--sub); font-family:ui-rounded,-apple-system,sans-serif;
+  }
+  .chip.on{background:var(--ink); color:#fff}
+  .stashmode{display:none; gap:8px; margin-bottom:14px}
+  .stashmode.show{display:flex}
+  .amt{
+    text-align:center; font-family:ui-rounded,-apple-system,sans-serif; font-weight:800;
+    font-size:52px; margin:2px 0; font-variant-numeric:tabular-nums; min-height:60px;
+  }
+  .amt small{font-size:26px; vertical-align:11px}
+  .remain{text-align:center; font-size:13px; color:var(--sub); margin-bottom:12px; min-height:16px; font-variant-numeric:tabular-nums}
+  .remain b.neg{color:var(--bad)} .remain b.ok{color:var(--goodtext)}
+  .frow{display:flex; gap:8px; margin-bottom:8px}
+  .field{
+    flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:12px 13px; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .field input{border:none; outline:none; background:none; font:inherit; width:100%; color:var(--ink)}
+  .field input::placeholder{color:#A6A6AC}
+  .datechip{
+    flex:0 0 auto; background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:12px 13px; font-size:14px; font-weight:600;
+  }
+  .datechip.alt{color:var(--sub); font-weight:500}
+  .datechip.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .pad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0}
+  .key{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; text-align:center;
+    padding:14px 0; font-size:21px; font-weight:600;
+    font-family:ui-rounded,-apple-system,sans-serif;
+  }
+  .key:active{background:#ECECEF}
+  .key.mute{background:transparent; border-color:transparent; color:var(--sub); font-size:17px}
+  .save{
+    width:100%; border-radius:18px; padding:16px 0; background:var(--ink); color:#fff;
+    font-size:17px; font-weight:800; font-family:ui-rounded,-apple-system,sans-serif;
+  }
+  .save:disabled{opacity:.35}
+  .sheetfoot{display:flex; justify-content:space-between; margin-top:12px}
+  .cancel,.del{font-size:14px; color:var(--sub); padding:4px 8px}
+  .del{color:var(--bad); font-weight:600; display:none}
+  .del.show{display:block}
+
+  /* ---------- history ---------- */
+  .hist{
+    position:fixed; inset:0; background:var(--paper); z-index:20; display:none;
+    max-width:520px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 18px) 18px 30px; overflow-y:auto;
+  }
+  .hist.open{display:block}
+  .hist .toprow{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px}
+  .hist h2{font-size:20px; font-weight:800; font-family:ui-rounded,-apple-system,sans-serif}
+  .close{font-size:15px; font-weight:600; color:var(--sub); padding:6px 10px}
+  .prow{
+    width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:13px 15px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;
+    font-variant-numeric:tabular-nums;
+  }
+  .prow .pn{font-size:14px; font-weight:600}
+  .prow .pv{font-size:13px; color:var(--sub)}
+  .prow .pv b.ok{color:var(--goodtext)} .prow .pv b.neg{color:var(--bad)}
+  .exp{margin-top:14px; width:100%; text-align:center; font-size:13px; color:var(--sub); padding:10px; border:1px dashed #C7C7CC; border-radius:14px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="app">Petty cash</div>
+  <div class="topright">
+    <button class="stashchip" id="stashChip">⌁ $0</button>
+    <button class="chipbtn" id="periodChip">— ▾</button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="big" id="heroBig"><small>$</small>550</div>
+  <div class="sub" id="heroSub"></div>
+  <div class="track">
+    <div class="money" id="trackMoney"></div>
+    <div class="half"></div>
+    <div class="today" id="trackToday"></div>
+  </div>
+  <div class="trackmeta"><span id="tmSpent"></span><span id="tmEnd"></span></div>
+</div>
+
+<div id="envs"></div>
+
+<div class="receipt">
+  <h3 id="tapeTitle">THIS PERIOD</h3>
+  <div id="tape"></div>
+</div>
+
+<div class="entrybar" id="entrybar">
+  <button class="kbtn" data-cat="g">Grocery<span id="qg"></span></button>
+  <button class="kbtn" data-cat="f">Fun<span id="qf"></span></button>
+  <button class="kbtn" data-cat="o">Other<span id="qo"></span></button>
+  <button class="kstash" data-cat="s">⌁</button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <div class="chips" id="catChips">
+    <button class="chip" data-cat="g">Grocery</button>
+    <button class="chip" data-cat="f">Fun</button>
+    <button class="chip" data-cat="o">Other</button>
+  </div>
+  <div class="stashmode" id="stashMode">
+    <button class="chip" data-dir="-1">Spend</button>
+    <button class="chip" data-dir="1">Add</button>
+  </div>
+  <div class="amt" id="amtView"><small>$</small>0</div>
+  <div class="remain" id="remainView"></div>
+  <div class="frow">
+    <div class="field"><input id="noteInput" placeholder="Note" autocomplete="off"></div>
+  </div>
+  <div class="frow">
+    <button class="datechip on" id="dToday">Today</button>
+    <button class="datechip alt" id="dYest">Yesterday</button>
+    <button class="datechip alt" id="dPick">…</button>
+    <input type="date" id="dInput" style="position:absolute; opacity:0; pointer-events:none">
+  </div>
+  <div class="pad" id="pad">
+    <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+    <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+    <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+    <button class="key mute">.</button><button class="key">0</button><button class="key mute">⌫</button>
+  </div>
+  <button class="save" id="saveBtn" disabled>Log</button>
+  <div class="sheetfoot">
+    <button class="del" id="delBtn">Delete</button>
+    <button class="cancel" id="cancelBtn" style="margin-left:auto">Cancel</button>
+  </div>
+</div>
+
+<div class="hist" id="hist">
+  <div class="toprow"><h2>History</h2><button class="close" id="histClose">Done</button></div>
+  <div id="histList"></div>
+  <button class="exp" id="expBtn">Copy all data as JSON</button>
+</div>
+
+<script>
+"use strict";
+/* ============ CONFIG — edit in the vault, not in the app ============ */
+const BUDGET = { g:200, f:200, o:150 };
+const TOTAL  = 550;
+const NAMES  = { g:"Groceries", f:"Fun", o:"Transport + other", s:"Stash" };
+const LETTER = { g:"G", f:"F", o:"O", s:"⌁" };
+const EPOCH  = "2026-08-16";          // first tracked period start
+
+/* ============ storage ============ */
+const K_TX="pc.tx.v1", K_STASH="pc.stash.v1", K_SETTLED="pc.settled.v1";
+const load=(k,d)=>{ try{const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v}catch(e){return d} };
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let TX      = load(K_TX, []);         // {id, date:"YYYY-MM-DD", cat, amt(+spend/-refund; stash: +add/-spend... see below), note}
+let STASH   = load(K_STASH, 0);       // running balance, moved only by stash tx + settlements
+let SETTLED = load(K_SETTLED, {});    // {periodId:true}
+
+/* tx sign convention: envelope cats: amt>0 = spend, amt<0 = refund.
+   stash cat: amt>0 = add, amt<0 = spend. */
+
+/* ============ dates & periods ============ */
+const p2=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const fromIso=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)};
+function periodOf(dateStr){
+  const d=fromIso(dateStr);
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${d.getDate()<=15?"A":"B"}`;
+}
+function periodBounds(pid){
+  const [y,m,h]=pid.split("-"); const yr=+y, mo=+m-1;
+  if(h==="A") return { s:new Date(yr,mo,1),  e:new Date(yr,mo,15) };
+  return { s:new Date(yr,mo,16), e:new Date(yr,mo+1,0) };
+}
+function periodLabel(pid){
+  const {s,e}=periodBounds(pid);
+  const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${M[s.getMonth()]} ${s.getDate()}–${e.getDate()}`;
+}
+function prevPeriod(pid){
+  const {s}=periodBounds(pid);
+  const d=new Date(s); d.setDate(d.getDate()-1);
+  return periodOf(iso(d));
+}
+function allPeriodsSince(epochPid, nowPid){
+  const out=[]; let p=epochPid;
+  while(p<=nowPid && out.length<200){ out.push(p); 
+    const {e}=periodBounds(p); const n=new Date(e); n.setDate(n.getDate()+1); p=periodOf(iso(n));
+  }
+  return out;
+}
+
+/* ============ math ============ */
+const txIn=pid=>TX.filter(t=>t.cat!=="s" && periodOf(t.date)===pid);
+const spent=(pid,cat)=>txIn(pid).filter(t=>t.cat===cat).reduce((s,t)=>s+t.amt,0);
+const spentAll=pid=>txIn(pid).reduce((s,t)=>s+t.amt,0);
+
+function settlePast(){
+  const nowPid=periodOf(iso(new Date()));
+  for(const pid of allPeriodsSince(periodOf(EPOCH), nowPid)){
+    if(pid===nowPid) break;
+    if(SETTLED[pid]) continue;
+    STASH += TOTAL - spentAll(pid);     // leftover in, overage out
+    SETTLED[pid]=true;
+  }
+  save(K_STASH,STASH); save(K_SETTLED,SETTLED);
+}
+
+/* ============ render ============ */
+const $=id=>document.getElementById(id);
+const money=v=>{
+  const neg=v<0, a=Math.abs(v);
+  const s=a%1===0?a.toFixed(0):a.toFixed(2);
+  return (neg?"−$":"$")+s;
+};
+let VIEW_PID=null;   // null = current
+
+function render(){
+  settlePast();
+  const nowPid=periodOf(iso(new Date()));
+  const pid=VIEW_PID||nowPid, live=pid===nowPid;
+  const {s,e}=periodBounds(pid);
+  const days=e.getDate()-s.getDate()+1;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dayN=live?Math.min(days,Math.max(1,Math.round((today-s)/864e5)+1)):days;
+
+  $("periodChip").textContent=periodLabel(pid)+" ▾";
+  const st=$("stashChip");
+  st.textContent="⌁ "+money(STASH);
+  st.classList.toggle("neg",STASH<0);
+
+  const sp=spentAll(pid), rem=TOTAL-sp;
+  const hb=$("heroBig");
+  hb.innerHTML=(rem<0?"−":"")+'<small>$</small>'+(Math.abs(rem)%1===0?Math.abs(rem).toFixed(0):Math.abs(rem).toFixed(2));
+  hb.classList.toggle("neg",rem<0);
+  const left=days-dayN+1;
+  $("heroSub").innerHTML=live
+    ? `of $${TOTAL} · <b>${money(Math.max(0,rem)/Math.max(1,left)).replace("$","$")} / day</b> for ${left} day${left===1?"":"s"}`
+    : `of $${TOTAL} · period closed`;
+  const pctS=Math.min(100,Math.max(0,sp/TOTAL*100)), pctT=dayN/days*100;
+  const tm=$("trackMoney"); tm.style.width=pctS+"%"; tm.classList.toggle("neg",sp>TOTAL);
+  $("trackToday").style.left=`calc(${pctT}% - 1px)`;
+  $("trackToday").style.display=live?"block":"none";
+  $("tmSpent").textContent=`${Math.round(sp/TOTAL*100)}% spent / ${Math.round(pctT)}% elapsed`;
+  $("tmEnd").textContent=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][e.getMonth()]+" "+e.getDate();
+
+  /* envelopes */
+  const overageGF=Math.max(0,spent(pid,"g")-BUDGET.g)+Math.max(0,spent(pid,"f")-BUDGET.f);
+  let html="";
+  for(const c of ["g","f","o"]){
+    const sc=spent(pid,c), b=BUDGET[c];
+    let remC=b-sc;
+    const isO=c==="o";
+    const absorbed=isO?overageGF:0;
+    if(isO) remC-=absorbed;
+    const over=remC<0 || sc>b;
+    const pfill=Math.min(100,sc/b*100);
+    const pabs=isO?Math.min(100-pfill,absorbed/b*100):0;
+    html+=`<div class="env${over?" hot":""}">
+      <div class="row"><div class="name">${NAMES[c]}</div>
+        <div class="left${remC<0?" neg":""}">${money(remC)}</div></div>
+      <div class="bar"><div class="fill${sc>b?" neg":""}" style="width:${pfill}%"></div>
+        ${pabs>0?`<div class="abs" style="left:${pfill}%;width:${pabs}%"></div>`:""}</div>
+      ${over||absorbed>0?`<div class="meta">
+          <span>${isO&&absorbed>0?`own ${money(sc)} · absorbed ${money(absorbed)}`:`spent ${money(sc)} of $${b}`}</span>
+          ${sc>b?`<span class="over">${money(sc-b)} over → Other</span>`:""}
+        </div>`:""}
+    </div>`;
+  }
+  $("envs").innerHTML=html;
+
+  /* quick buttons */
+  const qs={g:"qg",f:"qf",o:"qo"};
+  for(const c of ["g","f","o"]){
+    let r=BUDGET[c]-spent(nowPid,c);
+    if(c==="o") r-=Math.max(0,spent(nowPid,"g")-BUDGET.g)+Math.max(0,spent(nowPid,"f")-BUDGET.f);
+    const el=$(qs[c]); el.textContent=money(r)+(r<0?"":" left");
+    el.classList.toggle("neg",r<0);
+  }
+
+  /* tape */
+  $("tapeTitle").textContent=live?"THIS PERIOD":periodLabel(pid).toUpperCase();
+  const rows=TX.filter(t=>periodOf(t.date)===pid || (live&&t.cat==="s"&&periodOf(t.date)===pid))
+               .filter(t=>periodOf(t.date)===pid)
+               .sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  $("tape").innerHTML=rows.length?rows.map(t=>{
+    const d=fromIso(t.date);
+    const isIn=(t.cat==="s"&&t.amt>0)||(t.cat!=="s"&&t.amt<0);
+    const shown=t.cat==="s"?t.amt:-t.amt;
+    return `<button class="rline" data-id="${t.id}">
+      <span class="d">${d.getMonth()+1}/${p2(d.getDate())}</span>
+      <span class="c">${LETTER[t.cat]}</span>
+      <span class="m">${(t.note||NAMES[t.cat]).toUpperCase()}</span>
+      <span class="a${isIn?" in":""}">${shown>=0?"+":"−"}${Math.abs(shown).toFixed(2)}</span>
+    </button>`;
+  }).join(""):`<div class="empty">nothing logged</div>`;
+  $("entrybar").style.display=live?"flex":"none";
+}
+
+/* ============ entry sheet ============ */
+let S={open:false, cat:"g", dir:-1, digits:"", date:iso(new Date()), editId:null};
+function amtVal(){ return S.digits? parseFloat(S.digits):0 }
+function openSheet(cat, edit){
+  S.open=true; S.cat=cat; S.dir=-1; S.digits=""; S.date=iso(new Date()); S.editId=null;
+  if(edit){ S.editId=edit.id; S.cat=edit.cat; S.date=edit.date;
+    S.digits=String(Math.abs(edit.amt)); if(edit.cat==="s") S.dir=edit.amt>0?1:-1;
+    $("noteInput").value=edit.note||"";
+  } else $("noteInput").value="";
+  $("catChips").style.display=cat==="s"?"none":"flex";
+  $("stashMode").classList.toggle("show",cat==="s");
+  $("delBtn").classList.toggle("show",!!edit);
+  syncSheet();
+  $("scrim").classList.add("open"); $("sheet").classList.add("open");
+}
+function closeSheet(){ S.open=false; $("scrim").classList.remove("open"); $("sheet").classList.remove("open") }
+function syncSheet(){
+  document.querySelectorAll("#catChips .chip").forEach(b=>b.classList.toggle("on",b.dataset.cat===S.cat));
+  document.querySelectorAll("#stashMode .chip").forEach(b=>b.classList.toggle("on",+b.dataset.dir===S.dir));
+  const v=amtVal();
+  $("amtView").innerHTML='<small>$</small>'+(S.digits||"0");
+  const nowPid=periodOf(iso(new Date()));
+  if(S.cat==="s"){
+    const after=STASH+(S.dir*v)-(S.editId?getTx(S.editId).amt:0)*(S.editId&&getTx(S.editId).cat==="s"?1:0);
+    $("remainView").innerHTML=`Stash after this: <b class="${after<0?"neg":"ok"}">${money(after)}</b>`;
+  } else {
+    const prior=S.editId&&getTx(S.editId).cat===S.cat&&periodOf(getTx(S.editId).date)===periodOf(S.date)?getTx(S.editId).amt:0;
+    const after=BUDGET[S.cat]-spent(periodOf(S.date),S.cat)-v+prior;
+    $("remainView").innerHTML=`${NAMES[S.cat]} after this: <b class="${after<0?"neg":"ok"}">${money(after)}</b>`;
+  }
+  const t=iso(new Date()); const y=iso(new Date(Date.now()-864e5));
+  $("dToday").className="datechip"+(S.date===t?" on":"");
+  $("dYest").className="datechip"+(S.date===y?" on":" alt");
+  $("dPick").className="datechip"+((S.date!==t&&S.date!==y)?" on":" alt");
+  $("dPick").textContent=(S.date!==t&&S.date!==y)?S.date.slice(5).replace("-","/"):"…";
+  const verb=S.cat==="s"?(S.dir>0?"Add":"Spend"):"Log";
+  $("saveBtn").textContent=v>0?`${verb} ${money(v)}${S.cat==="s"?"":" to "+NAMES[S.cat].split(" ")[0]}`:verb;
+  $("saveBtn").disabled=!(v>0);
+}
+const getTx=id=>TX.find(t=>t.id===id);
+function commit(){
+  const v=amtVal(); if(!(v>0)) return;
+  const rec={ id:S.editId||Date.now(), date:S.date, cat:S.cat,
+              amt:S.cat==="s"? S.dir*v : v, note:$("noteInput").value.trim() };
+  if(S.editId){
+    const old=getTx(S.editId);
+    if(old.cat==="s") STASH-=old.amt;
+    TX=TX.filter(t=>t.id!==S.editId);
+  }
+  TX.push(rec);
+  if(rec.cat==="s") STASH+=rec.amt;
+  save(K_TX,TX); save(K_STASH,STASH);
+  closeSheet(); render();
+}
+function removeTx(){
+  if(!S.editId) return;
+  const old=getTx(S.editId);
+  if(old && old.cat==="s") STASH-=old.amt;
+  TX=TX.filter(t=>t.id!==S.editId);
+  save(K_TX,TX); save(K_STASH,STASH);
+  closeSheet(); render();
+}
+
+/* ============ history ============ */
+function openHist(){
+  const nowPid=periodOf(iso(new Date()));
+  const pids=allPeriodsSince(periodOf(EPOCH),nowPid).reverse();
+  $("histList").innerHTML=pids.map(pid=>{
+    const sp=spentAll(pid), lo=TOTAL-sp, live=pid===nowPid;
+    return `<button class="prow" data-pid="${pid}">
+      <span class="pn">${periodLabel(pid)}${live?" · now":""}</span>
+      <span class="pv">spent ${money(sp)} · <b class="${lo<0?"neg":"ok"}">${lo>=0?"+":""}${money(lo).replace("$","$")}</b></span>
+    </button>`;
+  }).join("");
+  $("hist").classList.add("open");
+}
+
+/* ============ events ============ */
+$("entrybar").addEventListener("click",e=>{
+  const b=e.target.closest(".kbtn,.kstash"); if(!b) return;
+  openSheet(b.dataset.cat);
+});
+$("catChips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return; S.cat=b.dataset.cat; syncSheet();
+});
+$("stashMode").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return; S.dir=+b.dataset.dir; syncSheet();
+});
+$("pad").addEventListener("click",e=>{
+  const k=e.target.closest(".key"); if(!k) return;
+  const t=k.textContent;
+  if(t==="⌫") S.digits=S.digits.slice(0,-1);
+  else if(t==="."){ if(!S.digits.includes(".")) S.digits=(S.digits||"0")+"." }
+  else{ if(S.digits.includes(".")&&S.digits.split(".")[1].length>=2) return;
+        if(S.digits.replace(".","").length>=6) return;
+        S.digits=(S.digits==="0"?"":S.digits)+t }
+  syncSheet();
+});
+$("dToday").onclick=()=>{S.date=iso(new Date()); syncSheet()};
+$("dYest").onclick=()=>{S.date=iso(new Date(Date.now()-864e5)); syncSheet()};
+$("dPick").onclick=()=>{const i=$("dInput"); i.value=S.date; i.showPicker?i.showPicker():i.click()};
+$("dInput").onchange=e=>{ if(e.target.value){S.date=e.target.value; syncSheet()} };
+$("noteInput").oninput=syncSheet;
+$("saveBtn").onclick=commit;
+$("cancelBtn").onclick=closeSheet;
+$("delBtn").onclick=removeTx;
+$("scrim").onclick=closeSheet;
+$("tape").addEventListener("click",e=>{
+  const r=e.target.closest(".rline"); if(!r) return;
+  const tx=getTx(+r.dataset.id); if(!tx) return;
+  if(VIEW_PID&&VIEW_PID!==periodOf(iso(new Date()))) return;   // closed periods read-only
+  openSheet(tx.cat,tx);
+});
+$("periodChip").onclick=openHist;
+$("stashChip").onclick=()=>openSheet("s");
+$("histClose").onclick=()=>{$("hist").classList.remove("open")};
+$("histList").addEventListener("click",e=>{
+  const r=e.target.closest(".prow"); if(!r) return;
+  const now=periodOf(iso(new Date()));
+  VIEW_PID=r.dataset.pid===now?null:r.dataset.pid;
+  $("hist").classList.remove("open"); render();
+});
+$("expBtn").onclick=async()=>{
+  const blob=JSON.stringify({tx:TX,stash:STASH,settled:SETTLED,exported:new Date().toISOString()});
+  try{ await navigator.clipboard.writeText(blob); $("expBtn").textContent="Copied"; }
+  catch(e){ prompt("Copy:",blob) }
+  setTimeout(()=>$("expBtn").textContent="Copy all data as JSON",1500);
+};
+
+render();
+</script>
+</body>
+</html>

@@ -130,6 +130,13 @@
   .remain{text-align:center; font-size:13px; color:var(--sub); margin-bottom:12px; min-height:16px; font-variant-numeric:tabular-nums}
   .remain b.neg{color:var(--bad)} .remain b.ok{color:var(--goodtext)}
   .frow{display:flex; gap:8px; margin-bottom:8px}
+  .qnotes{display:flex; gap:7px; margin-bottom:8px; flex-wrap:wrap}
+  .qnotes:empty{display:none}
+  .qn{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:8px 13px; font-size:13px; font-weight:600; color:var(--sub);
+  }
+  .qn:active{background:#ECECEF}
   .field{
     flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px;
     padding:12px 13px; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:8px;
@@ -229,8 +236,9 @@
   </div>
   <div class="amt" id="amtView"><small>$</small>0</div>
   <div class="remain" id="remainView"></div>
+  <div class="qnotes" id="qNotes"></div>
   <div class="frow">
-    <div class="field"><input id="noteInput" placeholder="Note" autocomplete="off"></div>
+    <div class="field"><input id="noteInput" placeholder="Note" autocomplete="off" enterkeyhint="done"></div>
   </div>
   <div class="frow">
     <button class="datechip on" id="dToday">Today</button>
@@ -265,6 +273,11 @@ const TOTAL  = 550;
 const NAMES  = { g:"Groceries", f:"Fun", o:"Transport + other", s:"Stash" };
 const LETTER = { g:"G", f:"F", o:"O", s:"⌁" };
 const EPOCH  = "2026-08-16";          // first tracked period start
+const QUICKNOTES = {
+  g: ["Target","Sprouts","Grocery Outlet","Berkeley Bowl"],
+  o: ["Ride home","Ride office","Ride"],
+  f: [], s: []
+};
 
 /* ============ storage ============ */
 const K_TX="pc.tx.v1", K_STASH="pc.stash.v1", K_SETTLED="pc.settled.v1";
@@ -432,6 +445,8 @@ function openSheet(cat, edit){
 }
 function closeSheet(){ S.open=false; $("scrim").classList.remove("open"); $("sheet").classList.remove("open") }
 function syncSheet(){
+  const qn=(QUICKNOTES[S.cat]||[]);
+  $("qNotes").innerHTML=qn.map(n=>`<button class="qn">${n}</button>`).join("");
   document.querySelectorAll("#catChips .chip").forEach(b=>b.classList.toggle("on",b.dataset.cat===S.cat));
   document.querySelectorAll("#stashMode .chip").forEach(b=>b.classList.toggle("on",+b.dataset.dir===S.dir));
   const v=amtVal();
@@ -519,6 +534,17 @@ $("dYest").onclick=()=>{S.date=iso(new Date(Date.now()-864e5)); syncSheet()};
 $("dPick").onclick=()=>{const i=$("dInput"); i.value=S.date; i.showPicker?i.showPicker():i.click()};
 $("dInput").onchange=e=>{ if(e.target.value){S.date=e.target.value; syncSheet()} };
 $("noteInput").oninput=syncSheet;
+$("qNotes").addEventListener("click",e=>{
+  const b=e.target.closest(".qn"); if(!b) return;
+  const cur=$("noteInput").value;
+  $("noteInput").value=b.textContent+(cur&&!cur.startsWith(b.textContent)?" "+cur:" ");
+  $("noteInput").focus();
+  const i=$("noteInput"); i.setSelectionRange(i.value.length,i.value.length);
+  syncSheet();
+});
+$("noteInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); }
+});
 $("saveBtn").onclick=commit;
 $("cancelBtn").onclick=closeSheet;
 $("delBtn").onclick=removeTx;

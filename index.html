@@ -10,7 +10,7 @@
 <style>
   :root{
     --paper:#F7F7F5; --card:#FFFFFF; --ink:#1D1D1F; --sub:#6E6E73; --line:#E5E5EA;
-    --good:#34C759; --goodtext:#1E9E4B; --bad:#FF3B30;
+    --good:#34C759; --goodtext:#1E9E4B; --bad:#FF3B30; --warntext:#B45309;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent}
   html,body{height:100%}
@@ -52,9 +52,12 @@
   .trackmeta{display:flex; justify-content:space-between; font-size:11.5px; color:#A0A0A6; font-variant-numeric:tabular-nums}
 
   .env{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px 16px 13px; margin-bottom:10px}
-  .env .row{display:flex; justify-content:space-between; align-items:baseline}
-  .env .name{font-size:15px; font-weight:600}
+  .env .row{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+  .env .name{font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0}
+  .env .name .sp{font-size:12px; font-weight:500; color:var(--sub); margin-left:7px; font-variant-numeric:tabular-nums}
   .env .left{font-family:ui-rounded,-apple-system,sans-serif; font-size:24px; font-weight:800; font-variant-numeric:tabular-nums}
+  .env .left.ok{color:var(--goodtext)}
+  .env .left.warn{color:var(--warntext)}
   .env .left.neg{color:var(--bad)}
   .env .bar{height:7px; border-radius:4px; background:#EDEDF0; margin-top:10px; position:relative; overflow:hidden}
   .env .fill{height:7px; position:absolute; left:0; top:0; background:var(--ink); border-radius:4px}
@@ -103,6 +106,58 @@
     flex:0 0 54px; border-radius:18px; border:1.8px dashed #B9B9BF; color:var(--sub);
     font-size:22px; font-weight:700; background:var(--paper);
   }
+
+  /* ---------- vault ---------- */
+  .tabs{display:flex; gap:8px; margin:18px 0 10px}
+  .tab{flex:1; text-align:center; padding:9px 0; border-radius:12px; font-size:13px; font-weight:700;
+       background:#EFEFF1; color:var(--sub)}
+  .tab.on{background:var(--ink); color:#fff}
+  .vault{background:#101013; border-radius:20px; padding:20px 18px 18px; color:#EDEDF0; position:relative; overflow:hidden}
+  .veyebrow{font-size:10.5px; font-weight:700; letter-spacing:.18em; color:#8E8E96; text-transform:uppercase}
+  .lifetime{font-family:ui-rounded,-apple-system,sans-serif; font-weight:800; font-size:38px;
+    color:#3EDC72; font-variant-numeric:tabular-nums; letter-spacing:-.01em;
+    text-shadow:0 0 24px rgba(62,220,114,.35); margin-top:2px}
+  .lifetime small{font-size:19px; vertical-align:8px}
+  .vrate{font-size:12px; color:#8E8E96; margin:4px 0 15px; font-variant-numeric:tabular-nums}
+  .vday{margin-bottom:15px}
+  .vdaytop{display:flex; justify-content:space-between; font-size:12px; color:#8E8E96; margin-bottom:6px; font-variant-numeric:tabular-nums}
+  .vdaytop b{color:#EDEDF0}
+  .vdaybar{height:6px; border-radius:3px; background:#1E1E24; overflow:hidden}
+  .vdayfill{height:6px; background:#3EDC72; border-radius:3px; box-shadow:0 0 10px rgba(62,220,114,.5)}
+  .goal{background:#17171C; border:1px solid #26262B; border-radius:16px; padding:14px 15px; position:relative}
+  .goal .grow{display:flex; justify-content:space-between; align-items:baseline}
+  .goal .gname{font-size:15px; font-weight:700}
+  .goal .gnum{font-family:ui-rounded,-apple-system,sans-serif; font-size:18px; font-weight:800; font-variant-numeric:tabular-nums}
+  .goal .gnum small{color:#8E8E96; font-size:13px; font-weight:600}
+  .gbar{height:12px; border-radius:6px; background:#101015; margin:11px 0 9px; position:relative; overflow:hidden}
+  .gsolid{height:12px; position:absolute; left:0; background:#3EDC72; border-radius:6px;
+          transition:width .9s cubic-bezier(.22,1.6,.36,1)}
+  .gpend{height:12px; position:absolute; background:rgba(62,220,114,.28); border-radius:0 6px 6px 0}
+  .gmeta{display:flex; justify-content:space-between; font-size:12px; color:#8E8E96; font-variant-numeric:tabular-nums}
+  .gmeta b{color:#EDEDF0}
+  .stamp{position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(16,16,19,.72); border-radius:16px; z-index:3}
+  .stamp span{font-family:ui-rounded,-apple-system,sans-serif; font-weight:800; font-size:30px; color:#3EDC72;
+    border:3px solid #3EDC72; border-radius:12px; padding:6px 18px; transform:rotate(-8deg) scale(3); opacity:0;
+    text-shadow:0 0 24px rgba(62,220,114,.6)}
+  .stamp.go{display:flex}
+  .stamp.go span{animation:slam .5s cubic-bezier(.2,1.4,.3,1) forwards}
+  @keyframes slam{to{transform:rotate(-8deg) scale(1); opacity:1}}
+  .queue{display:flex; gap:8px; margin-top:10px}
+  .qgoal{flex:1; background:#141419; border:1px dashed #2C2C33; border-radius:12px; padding:9px 11px;
+         font-size:12px; color:#8E8E96; font-variant-numeric:tabular-nums}
+  .qgoal b{display:block; color:#C9C9D0; font-size:13px}
+  .qgoal.donez{opacity:.55}
+  .fly{position:fixed; z-index:50; font-family:ui-rounded,-apple-system,sans-serif; font-weight:800; font-size:15px;
+    padding:7px 13px; border-radius:999px; pointer-events:none;
+    transition:transform 1s cubic-bezier(.25,1,.35,1), opacity 1s}
+  .fly.v{background:#3EDC72; color:#08240F}
+  .fly.s{background:#fff; color:var(--ink); border:1.6px dashed #999}
+  .cf{position:fixed; width:8px; height:12px; z-index:60; pointer-events:none; top:-14px; border-radius:2px;
+      animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+  .stashchip{transition:transform .3s}
+  .stashchip.pop{transform:scale(1.18); border-color:var(--good); color:var(--goodtext)}
 
   /* ---------- sheet ---------- */
   .scrim{position:fixed; inset:0; background:rgba(0,0,0,.28); display:none; z-index:9}
@@ -210,7 +265,30 @@
 
 <div id="envs"></div>
 
-<div class="receipt">
+<div class="tabs">
+  <button class="tab on" id="tabV">Vault</button>
+  <button class="tab" id="tabT">Tape</button>
+</div>
+
+<div class="vault" id="vaultPanel">
+  <div class="veyebrow">All-time saved</div>
+  <div class="lifetime" id="vLifetime"><small>$</small>0.00000</div>
+  <div class="vrate" id="vRate"></div>
+  <div class="vday">
+    <div class="vdaytop"><span>today</span><b id="vToday">+$0.00000</b></div>
+    <div class="vdaybar"><div class="vdayfill" id="vDayFill" style="width:0%"></div></div>
+  </div>
+  <button class="goal" id="goalCard" style="width:100%; text-align:left; display:block">
+    <div class="grow"><div class="gname" id="gName"></div>
+      <div class="gnum"><span id="gBanked"></span> <small id="gTarget"></small></div></div>
+    <div class="gbar"><div class="gsolid" id="gSolid"></div><div class="gpend" id="gPend"></div></div>
+    <div class="gmeta"><span id="gPct"></span><b id="gEta"></b></div>
+    <div class="stamp" id="stamp"><span>FUNDED</span></div>
+  </button>
+  <div class="queue" id="vQueue"></div>
+</div>
+
+<div class="receipt" id="tapePanel" style="display:none">
   <h3 id="tapeTitle">THIS PERIOD</h3>
   <div id="tape"></div>
 </div>
@@ -233,6 +311,7 @@
   <div class="stashmode" id="stashMode">
     <button class="chip" data-dir="-1">Spend</button>
     <button class="chip" data-dir="1">Add</button>
+    <button class="chip" data-dir="w">Windfall</button>
   </div>
   <div class="amt" id="amtView"><small>$</small>0</div>
   <div class="remain" id="remainView"></div>
@@ -270,11 +349,19 @@
 /* ============ CONFIG — edit in the vault, not in the app ============ */
 const BUDGET = { g:200, f:200, o:150 };
 const TOTAL  = 550;
+const WARN_AT = 1/3;                  // yellow at/below a third of budget remaining
 const NAMES  = { g:"Groceries", f:"Fun", o:"Transport + other", s:"Stash" };
-const LETTER = { g:"G", f:"F", o:"O", s:"⌁" };
+const LETTER = { g:"G", f:"F", o:"O", s:"⌁", v:"V" };
+/* vault config — edit in the vault, not the app */
+const VAULT_PER_PERIOD = 442;
+const VAULT_GOALS = [
+  {name:"Emergency fund", target:3000},
+  {name:"Perkins payoff", target:3000},
+  {name:"Discover payoff", target:4917},
+];
 const EPOCH  = "2026-08-16";          // first tracked period start
 const QUICKNOTES = {
-  g: ["Target","Sprouts","Grocery Outlet","Berkeley Bowl"],
+  g: ["Target","Sprouts","Groc Outlet","Berk Bowl"],
   o: ["Ride home","Ride office","Ride"],
   f: [], s: []
 };
@@ -322,7 +409,7 @@ function allPeriodsSince(epochPid, nowPid){
 }
 
 /* ============ math ============ */
-const txIn=pid=>TX.filter(t=>t.cat!=="s" && periodOf(t.date)===pid);
+const txIn=pid=>TX.filter(t=>(t.cat==="g"||t.cat==="f"||t.cat==="o") && periodOf(t.date)===pid);
 const spent=(pid,cat)=>txIn(pid).filter(t=>t.cat===cat).reduce((s,t)=>s+t.amt,0);
 const spentAll=pid=>txIn(pid).reduce((s,t)=>s+t.amt,0);
 
@@ -335,6 +422,131 @@ function settlePast(){
     SETTLED[pid]=true;
   }
   save(K_STASH,STASH); save(K_SETTLED,SETTLED);
+}
+
+/* ============ vault engine ============ */
+const K_VAULT="pc.vault.v1";
+let V = load(K_VAULT, {lastPid: periodOf(iso(new Date())), shown: 0, doneSeen: [], celebq: []});
+const vaultTx=()=>TX.filter(t=>t.cat==="v");
+function pour(){
+  const lifetime=vaultTx().reduce((s,t)=>s+t.amt,0);
+  let rem=Math.max(0,lifetime);
+  const goals=VAULT_GOALS.map(g=>{
+    const banked=Math.min(rem,g.target); rem-=banked;
+    return {name:g.name, target:g.target, banked, done: banked>=g.target};
+  });
+  const active=goals.find(g=>!g.done)||goals[goals.length-1];
+  return {lifetime, goals, active, overflow:rem};
+}
+function periodSecs(pid){ const {s,e}=periodBounds(pid); return (e-s)/1000+86400; }
+function pendingNow(){
+  const pid=periodOf(iso(new Date()));
+  const sec=(Date.now()-periodBounds(pid).s.getTime())/1000;
+  return VAULT_PER_PERIOD*Math.max(0,sec)/periodSecs(pid);
+}
+function settleVault(){
+  const nowPid=periodOf(iso(new Date()));
+  let credited=0;
+  for(const pid of allPeriodsSince(V.lastPid,nowPid)){
+    if(pid===V.lastPid) continue;
+    if(!TX.some(t=>t.cat==="v"&&t.auto===pid)){
+      TX.push({id:Date.now()+Math.floor(Math.random()*9999), date:iso(periodBounds(pid).s),
+               cat:"v", amt:VAULT_PER_PERIOD, note:"PAYDAY", auto:pid});
+      credited+=VAULT_PER_PERIOD;
+    }
+  }
+  V.lastPid=nowPid;
+  if(credited>0){ V.celebq.push({type:"payday",amt:credited}); save(K_TX,TX); }
+  for(const g of pour().goals){
+    if(g.done && !V.doneSeen.includes(g.name)){ V.doneSeen.push(g.name); V.celebq.push({type:"goal",name:g.name}); }
+  }
+  save(K_VAULT,V);
+}
+/* --- fx --- */
+function confetti(n){
+  const colors=["#3EDC72","#FFD34E","#7FD8FF","#FF7AB6","#FFFFFF"];
+  for(let i=0;i<n;i++){
+    const c=document.createElement("div"); c.className="cf";
+    c.style.left=Math.random()*100+"vw";
+    c.style.background=colors[i%colors.length];
+    c.style.animationDuration=(1.3+Math.random()*1.4)+"s";
+    c.style.animationDelay=(Math.random()*.35)+"s";
+    document.body.appendChild(c); setTimeout(()=>c.remove(),3300);
+  }
+}
+let ROLLUP={from:null,to:null,t0:0};
+function playCelebs(){
+  const lifeNow=pour().lifetime+pendingNow();
+  if(V.shown>0 && lifeNow-V.shown>1){ ROLLUP={from:V.shown,to:lifeNow,t0:performance.now()}; }
+  let delay=ROLLUP.from!=null?1400:200;
+  for(const ev of V.celebq){
+    if(ev.type==="payday"){ setTimeout(()=>confetti(14),delay); delay+=900; }
+    if(ev.type==="goal"){
+      setTimeout(()=>{ $("stamp").classList.add("go"); confetti(70);
+        setTimeout(()=>{$("stamp").classList.remove("go"); renderVaultStatic();},2100); },delay);
+      delay+=2300;
+    }
+  }
+  V.celebq=[]; V.shown=lifeNow; save(K_VAULT,V);
+}
+function windfallAnim(v80,s20){
+  const src=$("saveBtn").getBoundingClientRect?$("sheet").getBoundingClientRect():{left:100,top:400,width:200};
+  const vt=$("vaultPanel").getBoundingClientRect();
+  const st=$("stashChip").getBoundingClientRect();
+  const mk=(cls,txt)=>{const f=document.createElement("div"); f.className="fly "+cls; f.textContent=txt;
+    f.style.left=src.left+src.width/2-56+"px"; f.style.top=src.top+20+"px"; document.body.appendChild(f); return f};
+  const a=mk("v","+"+money(v80)+" → vault"), b=mk("s","+"+money(s20)+" → stash");
+  requestAnimationFrame(()=>{
+    a.style.transform=`translate(${vt.left-src.left+30}px, ${vt.top-src.top-10}px) scale(.85)`;
+    b.style.transform=`translate(${st.left-src.left-30}px, ${st.top-src.top-10}px) scale(.8)`;
+    setTimeout(()=>{a.style.opacity=0; b.style.opacity=0},850);
+  });
+  setTimeout(()=>{ $("stashChip").classList.add("pop");
+    setTimeout(()=>$("stashChip").classList.remove("pop"),450);
+    confetti(18); a.remove(); b.remove(); },900);
+}
+/* --- vault paint --- */
+const fmt5=v=>v.toLocaleString("en-US",{minimumFractionDigits:5,maximumFractionDigits:5});
+function renderVaultStatic(){
+  const {goals,active}=pour();
+  $("gName").textContent=active.name;
+  $("gBanked").textContent=money(active.banked);
+  $("gTarget").textContent="/ "+money(active.target);
+  const perDay=VAULT_PER_PERIOD/(periodSecs(periodOf(iso(new Date())))/86400);
+  $("vRate").textContent="$"+VAULT_PER_PERIOD+" / period · "+money(perDay)+" / day · always running";
+  $("vQueue").innerHTML=goals.filter(g=>g.name!==active.name).map(g=>
+    `<div class="qgoal${g.done?" donez":""}"><b>${g.name.split(" ")[0]}${g.done?" ✓":""}</b>${g.done?"funded":money(g.target)}</div>`
+  ).join("");
+}
+function vaultFrame(now){
+  const {active}=pour();
+  let life=pour().lifetime+pendingNow();
+  if(ROLLUP.from!=null){
+    const k=Math.min(1,(now-ROLLUP.t0)/1300);
+    life=ROLLUP.from+(ROLLUP.to-ROLLUP.from)*(1-Math.pow(1-k,3));
+    if(k>=1) ROLLUP={from:null,to:null,t0:0};
+  }
+  $("vLifetime").innerHTML="<small>$</small>"+fmt5(life);
+  const d=new Date();
+  const daySec=d.getHours()*3600+d.getMinutes()*60+d.getSeconds()+d.getMilliseconds()/1000;
+  const perSec=VAULT_PER_PERIOD/periodSecs(periodOf(iso(d)));
+  $("vToday").textContent="+$"+fmt5(daySec*perSec);
+  $("vDayFill").style.width=(daySec/864).toFixed(2)+"%";
+  const pend=pendingNow();
+  const ps=Math.min(100,active.banked/active.target*100);
+  const pp=Math.min(100-ps,pend/active.target*100);
+  $("gSolid").style.width=ps+"%";
+  $("gPend").style.left=ps+"%"; $("gPend").style.width=pp+"%";
+  $("gPct").textContent=Math.min(100,(active.banked+pend)/active.target*100).toFixed(3)+"%";
+  const remAmt=active.target-active.banked-pend;
+  if(remAmt<=0){ $("gEta").textContent="full"; }
+  else{
+    const days=Math.ceil(remAmt/(VAULT_PER_PERIOD/15.2));
+    const eta=new Date(Date.now()+days*864e5);
+    const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    $("gEta").textContent=`full in ${days} days · ${M[eta.getMonth()]} ${eta.getDate()}`;
+  }
+  requestAnimationFrame(vaultFrame);
 }
 
 /* ============ render ============ */
@@ -378,6 +590,7 @@ function render(){
   /* envelopes */
   const overageGF=Math.max(0,spent(pid,"g")-BUDGET.g)+Math.max(0,spent(pid,"f")-BUDGET.f);
   let html="";
+  const SHORT={g:"Grocery",f:"Fun",o:"Other"};
   for(const c of ["g","f","o"]){
     const sc=spent(pid,c), b=BUDGET[c];
     let remC=b-sc;
@@ -387,13 +600,14 @@ function render(){
     const over=remC<0 || sc>b;
     const pfill=Math.min(100,sc/b*100);
     const pabs=isO?Math.min(100-pfill,absorbed/b*100):0;
+    const status = remC<0 ? "neg" : (remC<=b*WARN_AT ? "warn" : "ok");
     html+=`<div class="env${over?" hot":""}">
-      <div class="row"><div class="name">${NAMES[c]}</div>
-        <div class="left${remC<0?" neg":""}">${money(remC)}</div></div>
+      <div class="row"><div class="name">${SHORT[c]}<span class="sp">spent ${money(sc)}/$${b}</span></div>
+        <div class="left ${status}">${money(remC)}</div></div>
       <div class="bar"><div class="fill${sc>b?" neg":""}" style="width:${pfill}%"></div>
         ${pabs>0?`<div class="abs" style="left:${pfill}%;width:${pabs}%"></div>`:""}</div>
-      ${over||absorbed>0?`<div class="meta">
-          <span>${isO&&absorbed>0?`own ${money(sc)} · absorbed ${money(absorbed)}`:`spent ${money(sc)} of $${b}`}</span>
+      ${(sc>b||absorbed>0)?`<div class="meta">
+          <span>${isO&&absorbed>0?`own ${money(sc)} · absorbed ${money(absorbed)}`:""}</span>
           ${sc>b?`<span class="over">${money(sc-b)} over → Other</span>`:""}
         </div>`:""}
     </div>`;
@@ -416,8 +630,8 @@ function render(){
                .sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   $("tape").innerHTML=rows.length?rows.map(t=>{
     const d=fromIso(t.date);
-    const isIn=(t.cat==="s"&&t.amt>0)||(t.cat!=="s"&&t.amt<0);
-    const shown=t.cat==="s"?t.amt:-t.amt;
+    const isIn=((t.cat==="s"||t.cat==="v")&&t.amt>0)||((t.cat!=="s"&&t.cat!=="v")&&t.amt<0);
+    const shown=(t.cat==="s"||t.cat==="v")?t.amt:-t.amt;
     return `<button class="rline" data-id="${t.id}">
       <span class="d">${d.getMonth()+1}/${p2(d.getDate())}</span>
       <span class="c">${LETTER[t.cat]}</span>
@@ -433,12 +647,23 @@ let S={open:false, cat:"g", dir:-1, digits:"", date:iso(new Date()), editId:null
 function amtVal(){ return S.digits? parseInt(S.digits,10)/100 : 0 }
 function openSheet(cat, edit){
   S.open=true; S.cat=cat; S.dir=-1; S.digits=""; S.date=iso(new Date()); S.editId=null;
+  if(cat==="v") S.dir=1;
   if(edit){ S.editId=edit.id; S.cat=edit.cat; S.date=edit.date;
     S.digits=String(Math.round(Math.abs(edit.amt)*100)); if(edit.cat==="s") S.dir=edit.amt>0?1:-1;
     $("noteInput").value=edit.note||"";
   } else $("noteInput").value="";
-  $("catChips").style.display=cat==="s"?"none":"flex";
-  $("stashMode").classList.toggle("show",cat==="s");
+  $("catChips").style.display=(cat==="s"||cat==="v")?"none":"flex";
+  $("stashMode").classList.toggle("show",cat==="s"||cat==="v");
+  if(cat==="v"){
+    document.querySelectorAll("#stashMode .chip").forEach((b,i)=>{
+      b.textContent=["Deduct","Add","Windfall"][i];
+      if(b.dataset.dir==="w") b.style.display="none";
+    });
+  } else {
+    document.querySelectorAll("#stashMode .chip").forEach((b,i)=>{
+      b.textContent=["Spend","Add","Windfall"][i]; b.style.display="";
+    });
+  }
   $("delBtn").classList.toggle("show",!!edit);
   syncSheet();
   $("scrim").classList.add("open"); $("sheet").classList.add("open");
@@ -453,9 +678,14 @@ function syncSheet(){
   const fv=amtVal();
   $("amtView").innerHTML='<small>$</small>'+(S.digits? fv.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : "0");
   const nowPid=periodOf(iso(new Date()));
-  if(S.cat==="s"){
-    const after=STASH+(S.dir*v)-(S.editId?getTx(S.editId).amt:0)*(S.editId&&getTx(S.editId).cat==="s"?1:0);
+  if(S.cat==="s"&&S.dir==="w"){
+    $("remainView").innerHTML=v>0?`80% → vault <b class="ok">${money(v*0.8)}</b> · 20% → stash <b class="ok">${money(v*0.2)}</b>`:"";
+  } else if(S.cat==="s"){
+    const after=STASH+((+S.dir)*v)-(S.editId?getTx(S.editId).amt:0)*(S.editId&&getTx(S.editId).cat==="s"?1:0);
     $("remainView").innerHTML=`Stash after this: <b class="${after<0?"neg":"ok"}">${money(after)}</b>`;
+  } else if(S.cat==="v"){
+    const after=pour().lifetime+(+S.dir)*v;
+    $("remainView").innerHTML=`Vault after this: <b class="${after<0?"neg":"ok"}">${money(after)}</b>`;
   } else {
     const prior=S.editId&&getTx(S.editId).cat===S.cat&&periodOf(getTx(S.editId).date)===periodOf(S.date)?getTx(S.editId).amt:0;
     const after=BUDGET[S.cat]-spent(periodOf(S.date),S.cat)-v+prior;
@@ -466,15 +696,25 @@ function syncSheet(){
   $("dYest").className="datechip"+(S.date===y?" on":" alt");
   $("dPick").className="datechip"+((S.date!==t&&S.date!==y)?" on":" alt");
   $("dPick").textContent=(S.date!==t&&S.date!==y)?S.date.slice(5).replace("-","/"):"…";
-  const verb=S.cat==="s"?(S.dir>0?"Add":"Spend"):"Log";
+  const verb=S.cat==="s"?(S.dir==="w"?"Split":(+S.dir>0?"Add":"Spend")):(S.cat==="v"?(+S.dir>0?"Add":"Deduct"):"Log");
   $("saveBtn").textContent=v>0?`${verb} ${money(v)}${S.cat==="s"?"":" to "+NAMES[S.cat].split(" ")[0]}`:verb;
   $("saveBtn").disabled=!(v>0);
 }
 const getTx=id=>TX.find(t=>t.id===id);
 function commit(){
   const v=amtVal(); if(!(v>0)) return;
+  if(S.cat==="s"&&S.dir==="w"&&!S.editId){
+    const note=$("noteInput").value.trim()||"WINDFALL";
+    const v80=Math.round(v*80)/100, s20=Math.round(v*100-v80*100)/100;
+    TX.push({id:Date.now(), date:S.date, cat:"v", amt:v80, note:note+" 80%"});
+    TX.push({id:Date.now()+1, date:S.date, cat:"s", amt:s20, note:note+" 20%"});
+    STASH+=s20; save(K_TX,TX); save(K_STASH,STASH);
+    closeSheet(); render(); windfallAnim(v80,s20);
+    V.shown=pour().lifetime+pendingNow(); save(K_VAULT,V);
+    return;
+  }
   const rec={ id:S.editId||Date.now(), date:S.date, cat:S.cat,
-              amt:S.cat==="s"? S.dir*v : v, note:$("noteInput").value.trim() };
+              amt:S.cat==="s"? (+S.dir)*v : (S.cat==="v"? (+S.dir)*v : v), note:$("noteInput").value.trim() };
   if(S.editId){
     const old=getTx(S.editId);
     if(old.cat==="s") STASH-=old.amt;
@@ -484,6 +724,7 @@ function commit(){
   if(rec.cat==="s") STASH+=rec.amt;
   save(K_TX,TX); save(K_STASH,STASH);
   closeSheet(); render();
+  if(rec.cat==="v"){ V.shown=pour().lifetime+pendingNow(); save(K_VAULT,V); renderVaultStatic(); }
 }
 function removeTx(){
   if(!S.editId) return;
@@ -552,10 +793,16 @@ $("scrim").onclick=closeSheet;
 $("tape").addEventListener("click",e=>{
   const r=e.target.closest(".rline"); if(!r) return;
   const tx=getTx(+r.dataset.id); if(!tx) return;
+  if(tx.auto) return;                                          // auto payday rows read-only
   if(VIEW_PID&&VIEW_PID!==periodOf(iso(new Date()))) return;   // closed periods read-only
   openSheet(tx.cat,tx);
 });
 $("periodChip").onclick=openHist;
+$("tabV").onclick=()=>{$("tabV").classList.add("on");$("tabT").classList.remove("on");
+  $("vaultPanel").style.display="block";$("tapePanel").style.display="none"};
+$("tabT").onclick=()=>{$("tabT").classList.add("on");$("tabV").classList.remove("on");
+  $("vaultPanel").style.display="none";$("tapePanel").style.display="block"};
+$("goalCard").onclick=()=>openSheet("v");
 $("stashChip").onclick=()=>openSheet("s");
 $("histClose").onclick=()=>{$("hist").classList.remove("open")};
 $("histList").addEventListener("click",e=>{
@@ -571,7 +818,13 @@ $("expBtn").onclick=async()=>{
   setTimeout(()=>$("expBtn").textContent="Copy all data as JSON",1500);
 };
 
+settleVault();
 render();
+renderVaultStatic();
+requestAnimationFrame(vaultFrame);
+playCelebs();
+setInterval(()=>{ const p=periodOf(iso(new Date())); if(p!==V.lastPid){ settleVault(); render(); renderVaultStatic(); playCelebs(); } },30000);
+window.addEventListener("pagehide",()=>{ V.shown=pour().lifetime+pendingNow(); save(K_VAULT,V); });
 </script>
 </body>
 </html>

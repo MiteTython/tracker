@@ -242,7 +242,7 @@
     <button class="key">1</button><button class="key">2</button><button class="key">3</button>
     <button class="key">4</button><button class="key">5</button><button class="key">6</button>
     <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-    <button class="key mute">.</button><button class="key">0</button><button class="key mute">⌫</button>
+    <button class="key mute">00</button><button class="key">0</button><button class="key mute">⌫</button>
   </div>
   <button class="save" id="saveBtn" disabled>Log</button>
   <div class="sheetfoot">
@@ -417,11 +417,11 @@ function render(){
 
 /* ============ entry sheet ============ */
 let S={open:false, cat:"g", dir:-1, digits:"", date:iso(new Date()), editId:null};
-function amtVal(){ return S.digits? parseFloat(S.digits):0 }
+function amtVal(){ return S.digits? parseInt(S.digits,10)/100 : 0 }
 function openSheet(cat, edit){
   S.open=true; S.cat=cat; S.dir=-1; S.digits=""; S.date=iso(new Date()); S.editId=null;
   if(edit){ S.editId=edit.id; S.cat=edit.cat; S.date=edit.date;
-    S.digits=String(Math.abs(edit.amt)); if(edit.cat==="s") S.dir=edit.amt>0?1:-1;
+    S.digits=String(Math.round(Math.abs(edit.amt)*100)); if(edit.cat==="s") S.dir=edit.amt>0?1:-1;
     $("noteInput").value=edit.note||"";
   } else $("noteInput").value="";
   $("catChips").style.display=cat==="s"?"none":"flex";
@@ -435,7 +435,8 @@ function syncSheet(){
   document.querySelectorAll("#catChips .chip").forEach(b=>b.classList.toggle("on",b.dataset.cat===S.cat));
   document.querySelectorAll("#stashMode .chip").forEach(b=>b.classList.toggle("on",+b.dataset.dir===S.dir));
   const v=amtVal();
-  $("amtView").innerHTML='<small>$</small>'+(S.digits||"0");
+  const fv=amtVal();
+  $("amtView").innerHTML='<small>$</small>'+(S.digits? fv.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : "0");
   const nowPid=periodOf(iso(new Date()));
   if(S.cat==="s"){
     const after=STASH+(S.dir*v)-(S.editId?getTx(S.editId).amt:0)*(S.editId&&getTx(S.editId).cat==="s"?1:0);
@@ -507,10 +508,10 @@ $("pad").addEventListener("click",e=>{
   const k=e.target.closest(".key"); if(!k) return;
   const t=k.textContent;
   if(t==="⌫") S.digits=S.digits.slice(0,-1);
-  else if(t==="."){ if(!S.digits.includes(".")) S.digits=(S.digits||"0")+"." }
-  else{ if(S.digits.includes(".")&&S.digits.split(".")[1].length>=2) return;
-        if(S.digits.replace(".","").length>=6) return;
-        S.digits=(S.digits==="0"?"":S.digits)+t }
+  else if(t==="00"){ if(S.digits && S.digits.length<=4) S.digits+="00" }
+  else{ if(S.digits.length>=6) return;
+        if(!S.digits && t==="0") return;
+        S.digits+=t }
   syncSheet();
 });
 $("dToday").onclick=()=>{S.date=iso(new Date()); syncSheet()};
